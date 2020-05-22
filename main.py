@@ -19,7 +19,7 @@ vk_session = vk_api.VkApi(token=conf_data['vk_api_token'])
 vk = vk_session.get_api()
 longpoll = VkBotLongPoll(vk_session, conf_data['vk_group_id'])
 
-donate_amount = 1
+donate_amount = 10
 
 lock = Lock()
 
