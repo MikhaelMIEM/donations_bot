@@ -4,12 +4,9 @@ from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 import json
 from Db import Db
 from qiwiActions import invoice, pay_status
-import locale
 from datetime import datetime
 from time import sleep
-from threading import Thread, Lock
-
-locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
+from threading import Thread
 
 with open('config.json') as config:
     conf_data = json.load(config)
@@ -20,8 +17,6 @@ vk = vk_session.get_api()
 longpoll = VkBotLongPoll(vk_session, conf_data['vk_group_id'])
 
 donate_amount = 10
-
-lock = Lock()
 
 months = ['', 'январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь',
           'декабрь']
@@ -176,6 +171,11 @@ if __name__ == '__main__':
         thread_pool[thread].start()
 
     while True:
+        sleep(10)
         for thread in thread_pool:
             if not thread_pool[thread].is_alive():
+                if thread == 'chat_bot':
+                    thread_pool[thread] = Thread(target=bot_main)
+                if thread == 'mailing':
+                    thread_pool[thread] = Thread(target=mailing)
                 thread_pool[thread].start()
