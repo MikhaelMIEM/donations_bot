@@ -7,6 +7,7 @@ from qiwiActions import invoice, pay_status
 from datetime import datetime
 from time import sleep
 from threading import Thread
+from dvach import po_random_comment
 
 with open('config.json') as config:
     conf_data = json.load(config)
@@ -16,7 +17,7 @@ vk_session = vk_api.VkApi(token=conf_data['vk_api_token'])
 vk = vk_session.get_api()
 longpoll = VkBotLongPoll(vk_session, conf_data['vk_group_id'])
 
-donate_amount = 10
+donate_amount = 200
 
 months = ['', 'январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь',
           'декабрь']
@@ -26,6 +27,14 @@ def answer_vk_message(event, text):
     vk.messages.send(
         random_id=get_random_id(),
         user_id=event.message['peer_id'],
+        message=text
+    )
+
+
+def answer_vk_chat(event, text):
+    vk.messages.send(
+        random_id=get_random_id(),
+        chat_id=event.chat_id,
         message=text
     )
 
@@ -146,6 +155,12 @@ def bot_main():
                     send_invoice()
                 else:
                     send_command_list(event)
+            elif event.from_chat:
+                print(event)
+                if event.message['text'].lower() == '/po' or \
+                    event.message['text'].lower() == '/по' or \
+                    event.message['text'].lower() == '/ро':
+                    answer_vk_chat(event, po_random_comment())
 
 
 def mailing():
