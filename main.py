@@ -156,7 +156,6 @@ def bot_main():
                 else:
                     send_command_list(event)
             elif event.from_chat:
-                print(event)
                 if event.message['text'].lower() == '/po' or \
                     event.message['text'].lower() == '/по' or \
                     event.message['text'].lower() == '/ро':
