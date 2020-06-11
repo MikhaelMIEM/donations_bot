@@ -157,8 +157,8 @@ def bot_main():
                     send_command_list(event)
             elif event.from_chat:
                 if event.message['text'].lower() == '/po' or \
-                    event.message['text'].lower() == '/по' or \
-                    event.message['text'].lower() == '/ро':
+                        event.message['text'].lower() == '/по' or \
+                        event.message['text'].lower() == '/ро':
                     answer_vk_chat(event, po_random_comment())
 
 
