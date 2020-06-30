@@ -160,7 +160,7 @@ def bot_main():
                 elif event.message['text'].lower() == 'debt':
                     show_debt(db, event)
                 elif event.message['text'].lower() == 'invoice123':
-                    send_invoice()
+                    send_invoice(db, event)
                 else:
                     send_command_list(event)
             elif event.from_chat:
