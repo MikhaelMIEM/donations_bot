@@ -101,17 +101,19 @@ def update_person_payments_statuses(db, id):
             db.update_payment_status(payment_id, db.PAID)
 
 
-def send_invoice():
-    pass
+def send_invoice(db, event):
+    id = event.message['peer_id']
+    answer = form_new_payment(db, id, donate_amount)
+    answer_vk_message(event, answer)
 
 
 def send_command_list(event):
     answer = """
-Список команд бота:
-    
-𝐃𝐨𝐧𝐚𝐭𝐞 - получать ежемесячные уведомления о взносах
-𝐒𝐭𝐨𝐩 𝐝𝐨𝐧𝐚𝐭𝐞 - отписаться от ежемесячных уведомлений о взносах
-𝐃𝐞𝐛𝐭 - проверить наличие долгов по взносам
+    Список команд бота:
+        
+    𝐃𝐨𝐧𝐚𝐭𝐞 - получать ежемесячные уведомления о взносах
+    𝐒𝐭𝐨𝐩 𝐝𝐨𝐧𝐚𝐭𝐞 - отписаться от ежемесячных уведомлений о взносах
+    𝐃𝐞𝐛𝐭 - проверить наличие долгов по взносам
     """
     answer_vk_message(event, answer)
 
@@ -124,19 +126,25 @@ def send_monthly_notification_to_donaters(db):
             message = form_new_payment(db, id, donate_amount)
             send_vk_message(id, message)
 
+
+def send_weekly_debt_reminder_to_donaters(db):
+    donaters = db.select_donaters()
+    for donater in donaters:
+        id = donater['id']
         update_person_payments_statuses(db, id)
         debts = list(db.select_person_debt(id))
         if debts:
             debt_urls = [debt['url'] for debt in debts]
-            message = 'И не забываем про долги =) \n' + '\n'.join([debt_url for debt_url in debt_urls])
+            message = 'Не забываем про долги =) \n' + '\n'.join([debt_url for debt_url in debt_urls])
             send_vk_message(id, message)
+
 
 
 def form_new_payment(db, person_id, donate_amount):
     payment_id = db.get_new_payment_id()
     invoice_url = invoice(payment_id, donate_amount, QIWI_SECRET)
     _, date = db.insert_payment(person_id, donate_amount, invoice_url)
-    answer = 'Платежка за ' + months[date.month] + ' ' + str(date.year) + '\n' + invoice_url
+    answer = '\n Новая платежка за ' + months[date.month] + ' ' + str(date.year) + '\n' + invoice_url
     return answer
 
 
@@ -165,13 +173,20 @@ def bot_main():
 def mailing():
     db = Db()
     last_mailing_month = 0
+    last_debt_mailing_week = 0
     while True:
         now = datetime.now()
-        if last_mailing_month != now.month and now.hour >= 20:
-            if not db.is_mailing_exist(now.month, now.year):
-                send_monthly_notification_to_donaters(db)
-                db.insert_mailing(now.month, now.year, True)
-            last_mailing_month = now.month
+        if now.hour >= 19:
+            current_week = now.isocalendar()[1]
+            if now.weekday() == 0 and last_debt_mailing_week != current_week:
+                send_weekly_debt_reminder_to_donaters(db)
+                last_debt_mailing_week = current_week
+            if last_mailing_month != now.month:
+                if not db.is_mailing_exist(now.month, now.year):
+                    send_monthly_notification_to_donaters(db)
+                    db.insert_mailing(now.month, now.year, True)
+                last_mailing_month = now.month
+
         sleep(1800)
 
 
